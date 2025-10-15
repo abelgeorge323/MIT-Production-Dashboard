@@ -45,58 +45,95 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ---- DATA LOADING FUNCTIONS ----
+@st.cache_data(ttl=300)
+def load_active_roster():
+    """Load MIT tracking data from Google Sheets"""
+    # CORRECTED URL - Changed from pubhtml to pub with output=csv
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=813046237&single=true&output=csv"
+    
+    try:
+        st.markdown('<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #6C63FF;">🔄 Loading MIT candidate data from Google Sheets...</div>', unsafe_allow_html=True)
+        
+        # Try different skiprows to find the right structure
+        for skiprows in [0, 1, 2, 3, 4, 5]:
+            try:
+                df = pd.read_csv(url, skiprows=skiprows)
+                if not df.empty and len(df.columns) > 3:
+                    st.markdown(f'<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4CAF50;">✅ Successfully loaded MIT candidate data! (skiprows={skiprows})</div>', unsafe_allow_html=True)
+                    break
+            except:
+                continue
+        else:
+            st.error("Could not load data with any skiprows configuration")
+            return pd.DataFrame()
+        
+        # Show available columns for debugging
+        st.markdown(f'<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #00B4DB;">📋 Available columns: {list(df.columns)}</div>', unsafe_allow_html=True)
+        
+        return df
+        
+    except Exception as e:
+        st.error(f"Error loading MIT candidate data: {e}")
+        return pd.DataFrame()
+
+@st.cache_data(ttl=300)
+def load_placement_options():
+    """Load job positions from Google Sheets"""
+    # CORRECTED URL - Changed from pubhtml to pub with output=csv
+    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=1073524035&single=true&output=csv"
+    
+    try:
+        st.markdown('<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #6C63FF;">🔄 Loading job positions from Google Sheets...</div>', unsafe_allow_html=True)
+        
+        # Try different skiprows to find the right structure
+        for skiprows in [0, 1, 2, 3, 4, 5, 6]:
+            try:
+                df = pd.read_csv(url, skiprows=skiprows)
+                if not df.empty and len(df.columns) > 3:
+                    st.markdown(f'<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #4CAF50;">✅ Successfully loaded job positions! (skiprows={skiprows})</div>', unsafe_allow_html=True)
+                    break
+            except:
+                continue
+        else:
+            st.error("Could not load job data with any skiprows configuration")
+            return pd.DataFrame()
+        
+        # Show available columns for debugging
+        st.markdown(f'<div style="background: #1E1E1E; padding: 10px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #00B4DB;">📋 Available columns: {list(df.columns)}</div>', unsafe_allow_html=True)
+        
+        return df
+        
+    except Exception as e:
+        st.error(f"Error loading job positions: {e}")
+        return pd.DataFrame()
+
 # ---- MAIN DASHBOARD ----
 st.markdown('<div class="dashboard-title">🎓 MIT Candidate Training Dashboard</div>', unsafe_allow_html=True)
 
-# Sample data for testing
-st.info("🔄 Testing with sample data - Replace URLs below with your Google Sheets URLs")
+# Load data
+main_df = load_active_roster()
+jobs_df = load_placement_options()
 
-# Sample metrics
+# Display metrics
 col1, col2, col3, col4, col5 = st.columns(5)
 
-col1.metric("Total Candidates", 25)
-col2.metric("Ready for Placement", 8)
-col3.metric("Open Positions", 12)
-col4.metric("In Training", 15)
-col5.metric("Starting MIT Program", 2)
+col1.metric("Total Candidates", len(main_df) if not main_df.empty else 0)
+col2.metric("Ready for Placement", "TBD")
+col3.metric("Open Positions", len(jobs_df) if not jobs_df.empty else 0)
+col4.metric("In Training", "TBD")
+col5.metric("Starting MIT Program", "TBD")
+
+# Show raw data for debugging
+if not main_df.empty:
+    st.markdown("---")
+    st.markdown("### 📊 Main Data Preview")
+    st.dataframe(main_df.head())
+
+if not jobs_df.empty:
+    st.markdown("---")
+    st.markdown("### 📊 Jobs Data Preview")
+    st.dataframe(jobs_df.head())
 
 st.markdown("---")
-st.markdown("### 📍 Google Sheets URLs to Test")
-
-st.code("""
-Main Data URL:
-https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=813046237&single=true&output=csv
-
-Jobs Data URL:
-https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=1073524035&single=true&output=csv
-""")
-
-st.markdown("### 🔧 Next Steps:")
-st.markdown("""
-1. **Test URLs**: Open both URLs in your browser
-2. **Check Sharing**: Make sure Google Sheets are "Anyone with link can view"
-3. **Get Correct URLs**: Use the exact CSV export URLs from your sheets
-4. **Replace URLs**: Update the URLs in the code with your working ones
-""")
-
-# Test URL loading
-st.markdown("### 🧪 URL Test")
-if st.button("Test Main Data URL"):
-    try:
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=813046237&single=true&output=csv"
-        df = pd.read_csv(url, skiprows=4)
-        st.success(f"✅ Successfully loaded {len(df)} rows!")
-        st.write("Columns:", list(df.columns))
-        st.dataframe(df.head())
-    except Exception as e:
-        st.error(f"❌ Error loading data: {e}")
-
-if st.button("Test Jobs Data URL"):
-    try:
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=1073524035&single=true&output=csv"
-        df = pd.read_csv(url, skiprows=5)
-        st.success(f"✅ Successfully loaded {len(df)} rows!")
-        st.write("Columns:", list(df.columns))
-        st.dataframe(df.head())
-    except Exception as e:
-        st.error(f"❌ Error loading data: {e}")
+st.caption("🔄 LIVE DATA: Loading from Google Sheets | Auto-refreshes every 5 minutes")
