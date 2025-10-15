@@ -1,105 +1,182 @@
 import pandas as pd
 import streamlit as st
 import plotly.express as px
-from datetime import datetime, timedelta
 
-# ---- PAGE CONFIG ----
+# ---- PAGE CONFIG (must come FIRST) ----
 st.set_page_config(
-    page_title="MIT Candidate Training Dashboard", 
+    page_title="MIT Candidate Training Dashboard",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
+# ---- SLEEK NAVY THEME ----
+st.markdown("""
+<style>
+/* Sleek Navy Theme */
+html, body, [data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%) !important;
+    color: #ffffff !important;
+}
+
+/* Headers */
+h1, h2, h3 {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* Metrics Cards */
+[data-testid="stMetric"] {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 16px !important;
+    padding: 20px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3) !important;
+}
+
+[data-testid="stMetricValue"] {
+    color: #ffd700 !important;
+    font-size: 2.5rem !important;
+    font-weight: 700 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+[data-testid="stMetricLabel"] {
+    color: #e3f2fd !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+}
+
+/* Tables */
+table, th, td {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(5px) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+th {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Charts */
+.js-plotly-plot, .plot-container {
+    background: transparent !important;
+}
+
+/* Expanders */
+[data-testid="stExpander"] {
+    background: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2) !important;
+}
+
+[data-testid="stExpander"] summary {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Success Messages */
+.stSuccess {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border: 1px solid rgba(76, 175, 80, 0.5) !important;
+    color: #ffffff !important;
+    backdrop-filter: blur(5px) !important;
+}
+
+/* App background */
+.stApp {
+    background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%) !important;
+}
+
+/* Subheaders */
+[data-testid="stMarkdownContainer"] h3 {
+    color: #ffd700 !important;
+    border-bottom: 2px solid rgba(255, 215, 0, 0.3) !important;
+    padding-bottom: 8px !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- Header ---
+st.markdown("<h1>🎓 MIT Candidate Training Dashboard</h1>", unsafe_allow_html=True)
+# ---- PAGE CONFIG ----
+
+ 
+
+
 # ---- CUSTOM STYLING ----
 st.markdown("""
     <style>
-        /* Force dark mode globally */
         :root {
             color-scheme: dark;
         }
-        html, body, [data-testid="stApp"], [data-testid="stAppViewContainer"] {
-            background-color: #0E1117 !important;
-            color: #FAFAFA !important;
+        body, .stApp {
+            background-color: #0b0e14 !important;
+            color: #f5f5f5 !important;
         }
-        /* Prevent light mode flashing */
-        * {
-            color-scheme: dark !important;
-        }
-        [data-testid="stAppViewContainer"] {
-            background-color: #0E1117;
-            color: white;
-        }
-        section[data-testid="stSidebar"] {
-            background-color: #1E1E1E !important;
-        }
-        /* Force all text elements to light color */
-        p, span, div, label, h1, h2, h3, h4, h5, h6 {
-            color: #FAFAFA !important;
-        }
-        .dashboard-title {
-            font-size: clamp(1.6rem, 3.2vw, 2.3rem);
-            font-weight: 700;
-            color: white;
-            background: linear-gradient(90deg, #6C63FF, #00B4DB);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 10px;
-        }
-        div[data-testid="stMetric"] {
-            background: #1E1E1E;
-            border-radius: 15px;
-            padding: 20px 25px;
-            box-shadow: 0 0 12px rgba(108, 99, 255, 0.25);
-            border-left: 6px solid #6C63FF;
-            transition: 0.3s ease;
-            min-width: 220px;
-        }
-        div[data-testid="stMetric"]:hover {
-            box-shadow: 0 0 25px rgba(108, 99, 255, 0.5);
-            transform: scale(1.03);
+        h1, h2, h3, h4, h5, h6, p, span, div {
+            color: #f5f5f5 !important;
         }
         div[data-testid="stMetricValue"] {
-            color: white !important;
-            font-size: clamp(22px, 2.2vw, 30px) !important;
-            font-weight: bold !important;
+            font-size: 2rem !important;
+            font-weight: 700 !important;
         }
         div[data-testid="stMetricLabel"] {
-            color: #E5E7EB !important;
-            font-size: clamp(12px, 1.2vw, 14px) !important;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-size: 1rem !important;
+            color: #bbbbbb !important;
         }
-        /* Force label/value color across browsers and themes */
-        div[data-testid="stMetricLabel"],
-        div[data-testid="stMetricLabel"] *,
-        div[data-testid="stMetricValue"],
-        div[data-testid="stMetricValue"] * {
-            color: #F3F4F6 !important;
-            -webkit-text-fill-color: #F3F4F6 !important;
-            mix-blend-mode: normal !important;
-            opacity: 1 !important;
+        .stMetric {
+            background: #15181e !important;
+            border-radius: 16px !important;
+            padding: 24px !important;
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.15);
+            text-align: center;
         }
-        div[data-testid="stMetricValue"],
-        div[data-testid="stMetricValue"] * { color: #FFFFFF !important; -webkit-text-fill-color: #FFFFFF !important; }
-        /* Help icon inside metrics */
-        div[data-testid="stMetric"] svg path { fill: #E5E7EB !important; }
-        @media (max-width: 1400px) {
-            div[data-testid="stMetric"] { min-width: 200px; padding: 18px 20px; }
+        .data-source {
+            background-color: #143d33;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-weight: 500;
+            color: #e1e1e1;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
         }
-        @media (max-width: 1100px) {
-            div[data-testid="stMetric"] { min-width: 170px; padding: 16px 18px; }
-        }
-        h3, h4 {
-            color: white !important;
-            font-weight: 600;
-        }
-        .insights-box {
-            background: #1E1E1E;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 15px;
+        [data-testid="stDataFrame"] {
+            border-radius: 12px !important;
+            overflow: hidden !important;
             box-shadow: 0 0 10px rgba(108, 99, 255, 0.15);
+        }
+        table {
+            background-color: #14171c !important;
+            border-collapse: collapse !important;
+            width: 100%;
+        }
+        th {
+            background-color: #1f2430 !important;
+            color: #e1e1e1 !important;
+            font-weight: 600 !important;
+            text-transform: uppercase;
+        }
+        td {
+            background-color: #171a21 !important;
+            color: #d7d7d7 !important;
+            font-size: 0.95rem !important;
+            border-top: 1px solid #252a34 !important;
+        }
+        tr:hover td {
+            background-color: #1e2230 !important;
+        }
+        .pending-title {
+            font-size: 1.8rem !important;
+            font-weight: 700 !important;
+            color: #ffd95e !important;
+            margin-bottom: 8px !important;
         }
         .placeholder-box {
             background: #1E1E1E;
@@ -110,512 +187,464 @@ st.markdown("""
             color: #bbb;
             box-shadow: 0 0 10px rgba(108, 99, 255, 0.1);
         }
-        .status-box {
-            background: #1E1E1E;
-            border-radius: 8px;
-            padding: 10px;
-            margin: 10px 0;
-            border-left: 4px solid #6C63FF;
+        .main-card {
+            border: 1px solid rgba(108, 99, 255, 0.15);
+            border-radius: 16px;
         }
-        .algorithm-box {
-            background: #1E1E1E;
-            border-radius: 12px;
-            padding: 20px;
-            margin: 20px 0;
-            border-left: 6px solid #00B4DB;
-            box-shadow: 0 0 10px rgba(0, 180, 219, 0.15);
-        }
-        .match-score-green { color: #4CAF50; }
-        .match-score-yellow { color: #FFC107; }
-        .match-score-red { color: #F44336; }
     </style>
 """, unsafe_allow_html=True)
 
-# ---- DATA LOADING FUNCTIONS ----
-@st.cache_data(ttl=300)
-def load_active_roster():
-    """Load and process MIT tracking data from Google Sheets"""
-    # CORRECT URL with proper CSV export
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=813046237&single=true&output=csv"
-    
+# ---- LOAD DATA ----
+@st.cache_data(ttl=60)
+def load_data():
+    main_data_url = (
+        "https://docs.google.com/spreadsheets/d/e/"
+        "2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/"
+        "pub?gid=813046237&single=true&output=csv"
+    )
     try:
-        st.markdown('<div class="status-box">🔄 Loading MIT candidate data from Google Sheets...</div>', unsafe_allow_html=True)
+        df = pd.read_csv(main_data_url, skiprows=1)  # Skip header row
+        data_source = "Google Sheets"
+    except Exception as e:
+        st.error(f"⚠️ Google Sheets error: {e}")
+        return pd.DataFrame(), "Error"
+
+    df = df.dropna(how="all")
+    df.columns = [c.strip() if isinstance(c, str) else c for c in df.columns]
+    df = df.rename(columns={"Week ": "Week", "Start date": "Start Date"})
+    
+    # Handle new data structure - filter out empty rows and clean data
+    df = df[df["MIT Name"].notna() & (df["MIT Name"] != "")]  # Remove rows without names
+    
+    
+    
+    if "Start Date" in df.columns:
+        df["Start Date"] = pd.to_datetime(df["Start Date"], errors="coerce")
+
+    today = pd.Timestamp.now()
+
+    # Only calculate weeks if Week column is empty or has manual values
+    # Check if Week column already has values
+    if "Week" in df.columns:
+        # Convert existing Week values to numeric
+        df["Week"] = pd.to_numeric(df["Week"], errors="coerce")
         
-        # Load the data - no skiprows needed based on the actual data structure
-        df = pd.read_csv(url)
-        st.markdown('<div class="status-box">✅ Successfully loaded MIT candidate data!</div>', unsafe_allow_html=True)
-        
-        # Clean up the data
-        df = df.dropna(how='all')
-        
-        # Process the top section (Training info) - rows with MIT Count
-        main_df = df[df['MIT Count'].notna()].copy()
-        
-        # Filter out "Position Identified" candidates (case-insensitive)
-        main_df = main_df[~main_df['Status'].str.contains('Position Identified', case=False, na=False)]
-        
-        # Process the bottom section (MIT Entering the Program) - rows without MIT Count
-        entering_df = df[df['MIT Count'].isna() & df['New Candidate Name'].notna()].copy()
-        
-        # Clean column names
-        main_df.columns = [c.strip() if isinstance(c, str) else c for c in main_df.columns]
-        entering_df.columns = [c.strip() if isinstance(c, str) else c for c in entering_df.columns]
-        
-        # Convert Start date to datetime for both sections
-        if 'Start date' in main_df.columns:
-            main_df['Start Date'] = pd.to_datetime(main_df['Start date'], errors='coerce')
-        if 'Start Date' in entering_df.columns:
-            entering_df['Start Date'] = pd.to_datetime(entering_df['Start Date'], errors='coerce')
-        
-        # Calculate weeks for main section
-        today = pd.Timestamp.now()
-        def calculate_weeks(row):
-            start = row.get('Start Date')
+        # Only calculate weeks for rows where Week is NaN (empty)
+        def calc_weeks(row):
+            # If Week already has a value, keep it
+            if pd.notna(row["Week"]):
+                return row["Week"]
+                
+            start = row["Start Date"]
             if pd.isna(start):
                 return None
             if start > today:
-                days_until = (start - today).days
-                weeks_until = days_until / 7
-                return f"-{int(weeks_until)} weeks from start"
-            else:
-                days_since = (today - start).days
-                week_number = (days_since // 7) + 1
-                return int(week_number)
-        
-        main_df['Week'] = main_df.apply(calculate_weeks, axis=1)
-        
-        # For entering section, calculate if they're starting in the future
-        entering_df['Week'] = entering_df.apply(calculate_weeks, axis=1)
-        
-        # Handle salary formatting
-        for df_section in [main_df, entering_df]:
-            if 'Salary' in df_section.columns:
-                df_section['Salary'] = df_section['Salary'].astype(str).str.replace('$', '').str.replace(',', '').str.replace(' ', '')
-                df_section['Salary'] = pd.to_numeric(df_section['Salary'], errors='coerce')
-        
-        # Map vertical codes to full names
-        vertical_map = {
-            'MANU': 'Manufacturing',
-            'AUTO': 'Automotive',
-            'FIN': 'Finance',
-            'TECH': 'Technology',
-            'AVI': 'Aviation',
-            'DIST': 'Distribution',
-            'RD': 'R&D',
-            'Reg & Div': 'Regulatory & Division'
-        }
-        
-        for df_section in [main_df, entering_df]:
-            if 'VERT' in df_section.columns:
-                df_section['Vertical Full'] = df_section['VERT'].map(vertical_map).fillna(df_section['VERT'])
-        
-        return main_df, entering_df
-        
-    except Exception as e:
-        st.error(f"Error loading MIT candidate data: {e}")
-        return pd.DataFrame(), pd.DataFrame()
+                return f"-{int((start - today).days / 7)} weeks from start"
+            return int(((today - start).days // 7) + 1)
+
+        df["Week"] = df.apply(calc_weeks, axis=1)
+        df["Week"] = pd.to_numeric(df["Week"], errors="coerce")
+
+
+    # Handle salary formatting - new format is "$65,000.00"
+    if "Salary" in df.columns:
+        df["Salary"] = (
+            df["Salary"]
+            .astype(str)
+            .str.replace("$", "")
+            .str.replace(",", "")
+            .str.replace(" ", "")
+            .str.replace(".00", "")  # Remove .00 from new format
+        )
+        df["Salary"] = pd.to_numeric(df["Salary"], errors="coerce")
+
+    df["Status"] = df["Status"].astype(str).str.strip().str.lower()
+    return df, data_source
+
 
 @st.cache_data(ttl=300)
-def load_placement_options():
-    """Load open job positions from Google Sheets"""
-    # CORRECT URL with proper CSV export
-    url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/pub?gid=1073524035&single=true&output=csv"
-    
+def load_jobs_data():
+    # ✅ Updated Placement Options Google Sheets URL
+    jobs_url = (
+        "https://docs.google.com/spreadsheets/d/e/"
+        "2PACX-1vTAdbdhuieyA-axzb4aLe8c7zdAYXBLPNrIxKRder6j1ZAlj2g4U1k0YzkZbm_dEcSwBik4CJ57FROJ/"
+        "pub?gid=1073524035&single=true&output=csv"
+    )
     try:
-        st.markdown('<div class="status-box">🔄 Loading job positions from Google Sheets...</div>', unsafe_allow_html=True)
+        jobs_df = pd.read_csv(jobs_url, skiprows=5, header=0)  # Skip to data rows
+        jobs_df = jobs_df.loc[:, ~jobs_df.columns.str.contains("^Unnamed")]
+        jobs_df = jobs_df.drop(columns=[c for c in ["JV Link", "JV ID"] if c in jobs_df.columns], errors="ignore")
+        jobs_df = jobs_df.dropna(how="all").fillna("")
         
-        # Load the data - skip first 5 rows to get to actual headers
-        df = pd.read_csv(url, skiprows=5)
-        st.markdown('<div class="status-box">✅ Successfully loaded job positions!</div>', unsafe_allow_html=True)
-        
-        # Drop unnecessary columns
-        df = df.drop(['JV ID', 'JV Link'], axis=1, errors='ignore')
-        
-        # Clean up the data
-        df = df.dropna(how='all')
-        
-        # Remove rows where Job Title is empty
-        if 'Job Title' in df.columns:
-            df = df.dropna(subset=['Job Title'])
-            df = df[df['Job Title'].str.strip() != '']
-        
-        # Map VERT codes to full names for jobs
-        vertical_map = {
-            'MANU': 'Manufacturing',
-            'AUTO': 'Automotive',
-            'FIN': 'Finance',
-            'TECH': 'Technology',
-            'AVI': 'Aviation',
-            'DIST': 'Distribution',
-            'RD': 'R&D',
-            'LIFSC': 'Life Science',
-            'Reg & Div': 'Regulatory & Division'
-        }
-        
-        if 'VERT' in df.columns:
-            df['Vertical'] = df['VERT'].map(vertical_map).fillna(df['VERT'])
-        
-        # Fill NaN values with empty strings for display
-        df = df.fillna('')
-        
-        return df
-        
+        # Clean jobs data - remove empty rows
+        jobs_df = jobs_df[jobs_df["Job Title"].notna() & (jobs_df["Job Title"] != "")]
+        return jobs_df
     except Exception as e:
-        st.error(f"Error loading job positions: {e}")
+        st.error(f"Error loading jobs data: {e}")
         return pd.DataFrame()
 
-# ---- MATCH SCORE ALGORITHM ----
-def parse_salary_range(salary_str):
-    """Parse salary range string and return average"""
-    if pd.isna(salary_str) or salary_str == '':
-        return 0
-    
-    # Handle formats like "70,000 - 75,000" or "65,000-70,000"
-    salary_str = str(salary_str).replace(',', '').replace(' ', '')
-    
-    if '-' in salary_str:
-        try:
-            parts = salary_str.split('-')
-            low = float(parts[0])
-            high = float(parts[1])
-            return (low + high) / 2
-        except:
-            return 0
-    else:
-        try:
-            return float(salary_str)
-        except:
-            return 0
+# ---- LOAD ----
 
-def same_city(location1, location2):
-    """Check if two locations are in the same city"""
-    if pd.isna(location1) or pd.isna(location2):
-        return False
-    
-    city1 = location1.split(',')[0].strip().lower()
-    city2 = location2.split(',')[0].strip().lower()
-    return city1 == city2
+df, data_source = load_data()
+jobs_df = load_jobs_data()
 
-def same_state(location1, state2):
-    """Check if location is in the same state"""
-    if pd.isna(location1) or pd.isna(state2):
-        return False
-    
-    if ',' in location1:
-        state1 = location1.split(',')[1].strip().lower()
-        state2 = state2.strip().lower()
-        return state1 == state2
-    return False
-
-def calculate_match_score(candidate, job):
-    """
-    Calculate match score between candidate and job position
-    Returns score from 0-100
-    """
-    score = 0
-    
-    # 1. Vertical Alignment (30 pts + 10 bonus)
-    candidate_vert = candidate.get('VERT', '')
-    job_vert = job.get('VERT', '')
-    
-    if candidate_vert == job_vert:
-        score += 30
-    
-    # Bonus for Amazon/Aviation experience
-    training_site = candidate.get('Training Site', '')
-    if training_site == 'Amazon' or candidate_vert == 'AVI':
-        score += 10
-    
-    # 2. Salary Trajectory (25 pts max)
-    candidate_salary = candidate.get('Salary', 0)
-    job_salary_avg = parse_salary_range(job.get('Salary', 0))
-    
-    if job_salary_avg > 0 and candidate_salary > 0:
-        if job_salary_avg > candidate_salary * 1.05:  # 5%+ increase
-            score += 25
-        elif job_salary_avg >= candidate_salary * 0.95:  # within 5%
-            score += 15
-        else:  # decrease
-            score += 5
-    else:
-        score += 10  # neutral if no salary data
-    
-    # 3. Geographic Fit (20 pts max)
-    candidate_location = candidate.get('Location', '')
-    job_location = f"{job.get('City', '')}, {job.get('State', '')}"
-    
-    if same_city(candidate_location, job_location):
-        score += 20
-    elif same_state(candidate_location, job.get('State', '')):
-        score += 10
-    else:
-        score += 5  # minimal score for different locations
-    
-    # 4. Confidence Level (15 pts max)
-    confidence_map = {'High': 15, 'Moderate': 10, 'Low': 5}
-    confidence = candidate.get('Confidence', 'Moderate')
-    score += confidence_map.get(confidence, 10)
-    
-    # 5. Readiness (10 pts max)
-    week = candidate.get('Week', 0)
-    if isinstance(week, int) and week >= 6:
-        score += 10
-    elif isinstance(week, int):
-        score += max(0, week * 1.5)
-    else:
-        score += 5  # neutral for non-numeric weeks
-    
-    return min(int(score), 100)
-
-# ---- MAIN DASHBOARD ----
-st.markdown('<div class="dashboard-title">🎓 MIT Candidate Training Dashboard</div>', unsafe_allow_html=True)
-
-# Load data
-main_df, entering_df = load_active_roster()
-jobs_df = load_placement_options()
-
-if main_df.empty and entering_df.empty:
-    st.error("❌ Unable to load candidate data. Please check the Google Sheet configuration.")
+if df.empty:
+    st.error("❌ Unable to load data.")
     st.stop()
 
-# Combine all MIT candidates (excluding Position Identified)
-all_candidates = []
-if not main_df.empty:
-    all_candidates.append(main_df)
-if not entering_df.empty:
-    # Only include Offer Accepted candidates in main count
-    offer_accepted = entering_df[entering_df['Status'] == 'Offer Accepted']
-    if not offer_accepted.empty:
-        all_candidates.append(offer_accepted)
+# ---- HEADER ----
+st.markdown('<div class="dashboard-title">🎓 MIT Candidate Training Dashboard</div>', unsafe_allow_html=True)
+if data_source == "Google Sheets":
+    st.success(f"📊 Data Source: {data_source} | Last Updated: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-if all_candidates:
-    combined_df = pd.concat(all_candidates, ignore_index=True)
-else:
-    combined_df = pd.DataFrame()
+# ---- METRICS ----
+offer_pending = len(df[df["Status"] == "offer pending"])
+offer_accepted = len(df[df["Status"] == "offer accepted"])
+non_identified = len(df[df["Status"].isin(["free agent discussing opportunity", "unassigned", "training"])])
+total_candidates = non_identified + offer_accepted
 
-# ---- KEY METRICS ----
-total_candidates = len(combined_df) if not combined_df.empty else 0
+ready_for_placement = df[
+    df["Week"].apply(lambda x: isinstance(x, (int, float)) and x > 6)
+    & (~df["Status"].isin(["position identified", "offer pending", "offer accepted"]))
+]
+ready = len(ready_for_placement)
 
-# Ready for Placement: Week >= 6 AND Status != "Position Identified"
-ready_for_placement = 0
-if not combined_df.empty:
-    ready_for_placement = len(combined_df[
-        (combined_df['Week'].apply(lambda x: isinstance(x, int) and x >= 6)) &
-        (~combined_df['Status'].str.contains('Position Identified', case=False, na=False))
-    ])
+in_training = len(
+    df[df["Status"].str.lower().eq("training") & df["Week"].apply(lambda x: isinstance(x, (int, float)) and x <= 6)]
+)
+open_jobs = len(jobs_df) if not jobs_df.empty else 0
 
-# Open Positions
-open_positions = len(jobs_df) if not jobs_df.empty else 0
-
-# In Training: Week 1-5 (Status = "Training")
-in_training = 0
-if not combined_df.empty:
-    in_training = len(combined_df[
-        (combined_df['Week'].apply(lambda x: isinstance(x, int) and 1 <= x <= 5)) &
-        (combined_df['Status'] == 'Training')
-    ])
-
-# Starting MIT Program: Status = "Offer Accepted" AND Start Date > Today
-starting_program = 0
-if not entering_df.empty:
-    today = pd.Timestamp.now()
-    starting_program = len(entering_df[
-        (entering_df['Status'] == 'Offer Accepted') &
-        (entering_df['Start Date'] > today)
-    ])
-
-# Display metrics
 col1, col2, col3, col4, col5 = st.columns(5)
+col1.metric("Total Candidates", total_candidates)
+col2.metric("Open Positions", open_jobs)
+col3.metric("Ready for Placement", ready)
+col4.metric("In Training (Weeks 1–5)", in_training)
+col5.metric("Offer Pending", offer_pending)
 
-col1.metric(
-    "Total Candidates",
-    total_candidates,
-    help="All active MIT candidates (excluding Position Identified)"
-)
-col2.metric(
-    "Ready for Placement",
-    ready_for_placement,
-    help="Candidates at Week ≥ 6 who are ready for placement"
-)
-col3.metric(
-    "Open Positions",
-    open_positions,
-    help="Number of active job openings available"
-)
-col4.metric(
-    "In Training",
-    in_training,
-    help="Candidates actively in training (Weeks 1-5)"
-)
-col5.metric(
-    "Starting MIT Program",
-    starting_program,
-    help="New candidates with accepted offers starting soon"
-)
-
-# ---- OPEN JOB POSITIONS ----
+# ---- CHART ----
 st.markdown("---")
-st.markdown("### 📍 Open Job Positions")
+left_col, right_col = st.columns([1, 1])
+color_map = {
+    "Ready for Placement": "#2E91E5",
+    "In Training": "#E15F99",
+    "Offer Pending": "#A020F0",
+}
+chart_data = pd.DataFrame({
+    "Category": ["Ready for Placement", "In Training", "Offer Pending"],
+    "Count": [ready, in_training, offer_pending]
+})
 
-if not jobs_df.empty:
-    # Create display format
-    display_jobs = jobs_df.copy()
+with right_col:
+    st.subheader("📊 Candidate Status Overview")
     
-    # Create position and location columns
-    if 'Job Title' in display_jobs.columns and 'Account' in display_jobs.columns:
-        display_jobs['Position'] = display_jobs.apply(
-            lambda row: f"{row.get('Job Title', 'N/A')} - {row.get('Account', 'N/A')}", 
-            axis=1
-        )
+    # Create bubble chart with creative positioning
+    bubble_data = pd.DataFrame({
+        "Status": ["Ready for Placement", "In Training", "Offer Pending"],
+        "Count": [ready, in_training, offer_pending],
+        "Size": [ready * 20, in_training * 20, offer_pending * 20],  # Bubble size
+        "X": [1, 2, 3],  # X positions
+        "Y": [2, 1, 3]   # Y positions for visual appeal
+    })
     
-    if 'City' in display_jobs.columns and 'State' in display_jobs.columns:
-        display_jobs['Location'] = display_jobs.apply(
-            lambda row: f"{row.get('City', 'N/A')}, {row.get('State', 'N/A')}", 
-            axis=1
-        )
+    fig_bubble = px.scatter(
+        bubble_data,
+        x="X",
+        y="Y", 
+        size="Size",
+        color="Status",
+        color_discrete_map={
+            "Ready for Placement": "#ffd700",
+            "In Training": "#00e676", 
+            "Offer Pending": "#ff6f00"
+        },
+        hover_data={"Count": True, "X": False, "Y": False},
+        text="Status"
+    )
     
-    # Show clean columns
-    clean_columns = ['Position', 'Location', 'Vertical', 'Salary']
-    available_columns = [col for col in clean_columns if col in display_jobs.columns]
+    # Add count labels on bubbles
+    fig_bubble.update_traces(
+        textposition="middle center",
+        textfont=dict(size=14, color="white", family="Arial Black"),
+        hovertemplate="<b>%{customdata[0]}</b><br>Count: %{customdata[0]}<extra></extra>",
+        customdata=bubble_data["Count"]
+    )
     
-    if available_columns:
-        styled_df = display_jobs[available_columns].copy()
-        st.dataframe(
-            styled_df, 
-            use_container_width=True,
-            height=450,
-            hide_index=True
-        )
+    fig_bubble.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)", 
+        plot_bgcolor="rgba(0,0,0,0)", 
+        font_color="#ffffff",
+        height=350,
+        showlegend=False,
+        margin=dict(l=20, r=20, t=20, b=20),
+        xaxis=dict(showgrid=False, showticklabels=False, zeroline=False),
+        yaxis=dict(showgrid=False, showticklabels=False, zeroline=False)
+    )
+    
+    st.plotly_chart(fig_bubble, use_container_width=True)
+
+with left_col:
+    st.subheader("📍 Open Job Positions")
+    if not jobs_df.empty:
+        clean_jobs_df = jobs_df[jobs_df["Job Title"].notna()]
+        st.dataframe(clean_jobs_df, use_container_width=True, height=400, hide_index=True)
     else:
-        st.dataframe(display_jobs, use_container_width=True, height=450)
-else:
-    st.markdown('<div class="placeholder-box">No job positions available</div>', unsafe_allow_html=True)
+        st.markdown('<div class="placeholder-box">No job positions data available</div>', unsafe_allow_html=True)
 
-# ---- READY CANDIDATES ----
-if ready_for_placement > 0:
+# ==========================================================
+# READY FOR PLACEMENT SECTION
+# ==========================================================
+ready_df = df[
+    df["Week"].apply(lambda x: isinstance(x, (int, float)) and x > 6)
+    & (~df["Status"].isin(["position identified", "offer pending", "offer accepted"]))
+    & (df["Status"].notna())
+]
+
+if not ready_df.empty:
     st.markdown("---")
-    st.markdown("### 👥 Ready Candidates")
-    
-    ready_candidates = combined_df[
-        (combined_df['Week'].apply(lambda x: isinstance(x, int) and x >= 6)) &
-        (~combined_df['Status'].str.contains('Position Identified', case=False, na=False))
-    ]
-    
-    if not ready_candidates.empty:
-        # Use MIT Name from the appropriate column
-        name_col = 'MIT Name' if 'MIT Name' in ready_candidates.columns else 'New Candidate Name'
-        
-        display_cols = [name_col, 'Week', 'Location', 'Vertical Full', 'Salary']
-        available_display_cols = [col for col in display_cols if col in ready_candidates.columns]
-        
-        if available_display_cols:
-            ready_display = ready_candidates[available_display_cols].copy()
-            
-            # Format salary
-            if 'Salary' in ready_display.columns:
-                ready_display['Salary'] = ready_display['Salary'].apply(
-                    lambda x: f"${x:,.0f}" if pd.notna(x) else "TBD"
-                )
-            
-            st.dataframe(ready_display, use_container_width=True, height=300, hide_index=True)
-        else:
-            st.dataframe(ready_candidates, use_container_width=True, height=300)
+    st.markdown("### 🧩 Ready for Placement Candidates")
 
-# ---- MATCH SCORE ALGORITHM SECTION ----
-st.markdown("---")
-st.markdown("### 🎯 Candidate-Job Matching Algorithm")
+    # Select relevant columns dynamically
+    ready_cols = [col for col in ["MIT Name", "Training Site", "Location", "Week", "Salary", "Level"] if col in ready_df.columns]
+    ready_display = ready_df[ready_cols].copy().fillna("—")
 
-# Algorithm explanation
-st.markdown("""
-<div class="algorithm-box">
-<h4>📊 Match Score Calculation Factors:</h4>
-<ul>
-<li><b>Vertical Alignment (30 pts + 10 bonus):</b> Same industry = 30pts, Amazon/Aviation experience = +10pts bonus</li>
-<li><b>Salary Trajectory (25 pts max):</b> Increase = 25pts, Same range = 15pts, Decrease = 5pts</li>
-<li><b>Geographic Fit (20 pts max):</b> Same city = 20pts, Same state = 10pts</li>
-<li><b>Confidence Level (15 pts max):</b> High = 15pts, Moderate = 10pts, Low = 5pts</li>
-<li><b>Readiness (10 pts max):</b> Week ≥6 = 10pts, else proportional</li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
+    # Clean salary formatting
+    if "Salary" in ready_display.columns:
+        ready_display["Salary"] = (
+            ready_display["Salary"].astype(str).str.replace("$", "").str.replace(",", "").replace("nan", "TBD")
+        )
 
-# Calculate match scores for ready candidates
-if ready_for_placement > 0 and open_positions > 0:
-    st.markdown("#### 🎯 Candidate Match Scores")
-    
-    ready_candidates = combined_df[
-        (combined_df['Week'].apply(lambda x: isinstance(x, int) and x >= 6)) &
-        (~combined_df['Status'].str.contains('Position Identified', case=False, na=False))
-    ]
-    
-    for _, candidate in ready_candidates.iterrows():
-        candidate_name = candidate.get('MIT Name', candidate.get('New Candidate Name', 'Unknown'))
-        candidate_week = candidate.get('Week', 0)
-        
-        # Calculate matches for this candidate
-        matches = []
-        for _, job in jobs_df.iterrows():
-            score = calculate_match_score(candidate, job)
-            matches.append({
-                'Job': f"{job.get('Job Title', 'N/A')} - {job.get('Account', 'N/A')}",
-                'Location': f"{job.get('City', 'N/A')}, {job.get('State', 'N/A')}",
-                'Vertical': job.get('Vertical', 'N/A'),
-                'Score': score
-            })
-        
-        # Sort by score and take top 3
-        matches.sort(key=lambda x: x['Score'], reverse=True)
-        top_matches = matches[:3]
-        
-        # Display candidate with expandable matches
-        with st.expander(f"👤 {candidate_name} - Ready for Placement (Week {candidate_week})"):
-            st.write("**Top 3 Job Matches:**")
-            
-            for i, match in enumerate(top_matches, 1):
-                score = match['Score']
-                if score >= 80:
-                    color_class = "match-score-green"
-                    icon = "🟢"
-                elif score >= 60:
-                    color_class = "match-score-yellow"
-                    icon = "🟡"
-                else:
-                    color_class = "match-score-red"
-                    icon = "🔴"
-                
-                st.markdown(f"""
-                <div class="match-score-{color_class}">
-                <b>{i}. {icon} {match['Job']}</b><br>
-                📍 {match['Location']} | 🏢 {match['Vertical']} | ⭐ Match Score: {score}/100
-                </div>
-                """, unsafe_allow_html=True)
-                st.write("")
+    # Show table
+    st.dataframe(
+        ready_display,
+        use_container_width=True,
+        hide_index=True,
+        height=(len(ready_display) * 35 + 60),
+    )
+    st.caption(f"{len(ready_display)} candidates are ready for placement — week > 6 and not yet placed.")
 else:
-    if ready_for_placement == 0:
-        st.info("No candidates are currently ready for placement (Week ≥ 6).")
-    if open_positions == 0:
-        st.info("No open job positions available for matching.")
+    st.markdown('<div class="placeholder-box">No candidates currently ready for placement</div>', unsafe_allow_html=True)
+
+
+# ==========================================================
+# IN TRAINING SECTION
+# ==========================================================
+in_training_df = df[
+    df["Status"].str.lower().eq("training")
+    & df["Week"].apply(lambda x: isinstance(x, (int, float)) and x <= 6)
+]
+
+if not in_training_df.empty:
+    st.markdown("---")
+    st.markdown("### 🏋️ In Training (Weeks 1–5)")
+
+    train_cols = [col for col in ["MIT Name", "Training Site", "Location", "Week", "Salary", "Level"] if col in in_training_df.columns]
+    train_display = in_training_df[train_cols].copy().fillna("—")
+
+    if "Salary" in train_display.columns:
+        train_display["Salary"] = (
+            train_display["Salary"].astype(str).str.replace("$", "").str.replace(",", "").replace("nan", "TBD")
+        )
+
+    st.dataframe(
+        train_display,
+        use_container_width=True,
+        hide_index=True,
+        height=(len(train_display) * 35 + 60),
+    )
+    st.caption(f"{len(train_display)} candidates currently in training (weeks 1–5).")
+else:
+    st.markdown('<div class="placeholder-box">No candidates currently in training</div>', unsafe_allow_html=True)
+
+# ==========================================================
+# 🎯 CANDIDATE–JOB MATCH SCORE SECTION (Streamlined Executive View)
+# ==========================================================
+st.markdown("---")
+st.markdown("### 🎯 Placement Readiness Breakdown")
+
+# Filter relevant candidates
+candidates_df = df[
+    df["Status"].isin(["training", "unassigned", "free agent discussing opportunity"])
+].copy()
+candidates_df = candidates_df.dropna(subset=["MIT Name"])
+
+if not jobs_df.empty and not candidates_df.empty:
+
+    # ---- Salary parsing logic ----
+
+    def parse_salary(s):
+        if pd.isna(s):
+            return None
+        if isinstance(s, (int, float)):
+            return float(s)
+    
+        # Clean string
+        s = str(s).replace("$", "").replace(",", "").replace(".00", "").strip()
+    
+        # Normalize formats like "70,000 - 75,000" or "70k-75k" or "65000"
+        s = s.lower().replace("k", "000").replace("–", "-").replace("—", "-").replace("_", "-")
+    
+        if "-" in s:
+            try:
+                low, high = s.split("-")
+                return (float(low.strip()), float(high.strip()))
+            except ValueError:
+                return None
+        else:
+            try:
+                return float(s)
+            except ValueError:
+                return None
+
+    def midpoint(val):
+        if isinstance(val, tuple):
+            return (val[0] + val[1]) / 2
+        return val if isinstance(val, (int, float)) else None
+
+
+# ---- Apply salary parsing and midpoint logic ----
+    jobs_df["SalaryRange"] = jobs_df["Salary"].apply(parse_salary)
+    candidates_df["SalaryRange"] = candidates_df["Salary"].apply(parse_salary)
+    
+    jobs_df["SalaryMid"] = jobs_df["SalaryRange"].apply(midpoint)
+    candidates_df["SalaryMid"] = candidates_df["SalaryRange"].apply(midpoint)
+
+
+    # ---- Calculate match scores (your scoring stays the same) ----
+    match_results = []
+    for _, c in candidates_df.iterrows():
+        for _, j in jobs_df.iterrows():
+            subscores = {}
+
+            # 1) Vertical Alignment
+            vert_score = 0
+            c_vert = str(c.get("VERT", "")).strip().upper()
+            j_vert = str(j.get("VERT", j.get("Vertical", ""))).strip().upper()
+            if c_vert == j_vert:
+                vert_score += 30
+            exp_str = " ".join(
+                str(c.get(k, "")).lower()
+                for k in c.index if any(x in k.lower() for x in ["experience", "notes", "background"])
+            )
+            if "amazon" in exp_str or "aviation" in exp_str:
+                vert_score += 10
+            subscores["Vertical"] = vert_score
+
+            # 2) Salary Trajectory
+            c_sal, j_sal = c.get("SalaryMid"), j.get("SalaryMid")
+            if j_sal and c_sal:
+                if j_sal >= 1.05 * c_sal:
+                    sal_score = 25
+                elif abs(j_sal - c_sal) / c_sal <= 0.05:
+                    sal_score = 15
+                elif j_sal < 0.95 * c_sal:
+                    sal_score = -10
+                else:
+                    sal_score = 0
+            else:
+                sal_score = 0
+            subscores["Salary"] = sal_score
+
+            # 3) Geographic Fit
+            geo_score = 5
+            cand_loc = str(c.get("Location", "")).strip().lower()
+            job_city = str(j.get("City", "")).strip().lower()
+            job_state = str(j.get("State", "")).strip().upper()
+            if cand_loc == job_city:
+                geo_score = 20
+            elif cand_loc.endswith(job_state.lower()):
+                geo_score = 10
+            subscores["Geo"] = geo_score
+
+            # 4) Confidence
+            conf = str(c.get("Confidence", "")).lower()
+            if "high" in conf:
+                conf_score = 15
+            elif "mod" in conf:
+                conf_score = 10
+            elif "low" in conf:
+                conf_score = 5
+            else:
+                conf_score = 10
+            subscores["Confidence"] = conf_score
+
+            # 5) Readiness
+            week = c.get("Week")
+            if isinstance(week, (int, float)):
+                if week >= 6:
+                    ready_score = 10
+                elif 1 <= week <= 5:
+                    ready_score = week * 1.5
+                else:
+                    ready_score = 5
+            else:
+                ready_score = 5
+            subscores["Readiness"] = ready_score
+
+            total = sum(subscores.values())
+
+            # Safe access for fields that may vary by sheet
+            title_val = j.get("Title") or j.get("Job Title") or "—"
+            vert_val = j.get("VERT") or j.get("Vertical") or "—"
+            acct_val = j.get("Account") or j.get("Job Account") or "—"
+
+            match_results.append({
+                "Candidate": c["MIT Name"],
+                "Job Account": acct_val,
+                "Title": title_val,
+                "City": j.get("City", ""),
+                "State": j.get("State", ""),
+                "VERT": vert_val,
+                "Total Score": round(total, 1),
+                "Week": c.get("Week"),
+                "Status": c.get("Status")
+            })
+
+    match_df = pd.DataFrame(match_results)
+    match_df = match_df.sort_values("Total Score", ascending=False)
+
+    # Ready first, then training
+    match_df["is_ready"] = (match_df["Week"] >= 6).astype(int)
+    match_df = match_df.sort_values(["is_ready", "Week", "Total Score"], ascending=[False, False, False])
+
+    # Expanders per candidate (ready auto-expanded)
+    for candidate, group in match_df.groupby("Candidate", sort=False):
+        week = group["Week"].iloc[0]
+        status = "Ready for Placement" if week >= 6 else "In Training"
+        color = "🟢" if week >= 6 else "🟡"
+        expanded = True if week >= 6 else False
+
+        top_jobs = group.nlargest(3, "Total Score")
+        with st.expander(f"{color} {candidate} — {status} (Week {int(week)})", expanded=expanded):
+            # iterate with dicts -> no KeyError from spaces/underscores
+            for idx, rec in enumerate(top_jobs.to_dict(orient="records"), start=1):
+                title = rec.get("Title", "—")
+                account = rec.get("Job Account") or rec.get("Job_Account") or rec.get("Account") or "—"
+                city = rec.get("City", "")
+                state = rec.get("State", "")
+                vert = rec.get("VERT", "—")
+                score = rec.get("Total Score", 0)
+
+                st.markdown(
+                    f"**{idx}. {title} — {account}**  \n"
+                    f"📍 {city}, {state} | 🏢 {vert} | ⭐ Match Score: {score}/100"
+                )
+            st.markdown("---")
+
+else:
+    st.markdown(
+        '<div class="placeholder-box">No data available to compute match scores</div>',
+        unsafe_allow_html=True
+    )
+
+
+
 
 # ---- OFFER PENDING SECTION ----
-if not entering_df.empty:
-    offer_pending_candidates = entering_df[entering_df['Status'] == 'Offer Pending']
-    
-    if not offer_pending_candidates.empty:
-        st.markdown("---")
-        st.markdown("### 🤝 Offer Pending Candidates")
-        
-        # Display offer pending candidates
-        display_cols = ['New Candidate Name', 'Training Site', 'Location', 'Level', 'Notes']
-        available_display_cols = [col for col in display_cols if col in offer_pending_candidates.columns]
-        
-        if available_display_cols:
-            offer_pending_display = offer_pending_candidates[available_display_cols].copy()
-            st.dataframe(offer_pending_display, use_container_width=True, hide_index=True)
-        else:
-            st.dataframe(offer_pending_candidates, use_container_width=True, hide_index=True)
-        
-        st.caption(f"{len(offer_pending_candidates)} candidates with pending offers - awaiting final approval/acceptance")
-
-# ---- FOOTER ----
-st.markdown("---")
-st.caption("🔄 LIVE DATA: Loading from Google Sheets | Auto-refreshes every 5 minutes | Match scores calculated dynamically")
+offer_pending_df = df[df["Status"].str.lower() == "offer pending"]
+if not offer_pending_df.empty:
+    st.markdown("---")
+    st.markdown("### 🤝 Offer Pending Candidates")
+    display_cols = [c for c in ["MIT Name", "Training Site", "Location", "Level"] if c in offer_pending_df.columns]
+    offer_pending_display = offer_pending_df[display_cols].fillna("—")
+    st.dataframe(offer_pending_display, use_container_width=True, hide_index=True)
+    st.caption(f"{len(offer_pending_display)} candidates with pending offers – awaiting final approval/acceptance")
